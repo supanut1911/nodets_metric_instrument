@@ -1,0 +1,16 @@
+[
+  {
+      "targets": ["localhost:9090"],
+      "labels": {
+        "job": "prometheus",
+        "type": "monitoring-tool"
+      }
+  },
+  {
+      "targets": ["flip_coin_app:8899"],
+      "labels": {
+          "job": "flip-coin-app",
+          "type": "webserver"
+      }
+  }    
+]
