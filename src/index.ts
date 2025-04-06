@@ -21,6 +21,14 @@ const temperatureGague = new client.Gauge({
   labelNames: ['room']
 })
 
+//create custome histogram
+const httpRequestDurationHistogram = new client.Histogram({
+  name: "http_request_duration_second",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["method", "path", "status_code"],
+  buckets: [0.01, 0.05, 0.07, 0.1, 0.25, 0.5, 0.75,1, 2, 5]
+})
+
 const tailCounter = new client.Counter({
   name: "tail_counter",
   help: "total number of tail",
@@ -37,6 +45,7 @@ register.registerMetric(headCounter)
 register.registerMetric(tailCounter)
 register.registerMetric(flipCounter)
 register.registerMetric(temperatureGague)
+register.registerMetric(httpRequestDurationHistogram)
 register.setDefaultLabels({
   app: 'coin-api'
 })
@@ -44,6 +53,17 @@ register.setDefaultLabels({
 //enable collec default metric
 const collectDefaultMetrics =  client.collectDefaultMetrics
 collectDefaultMetrics({ register })
+
+// Middleware to observe request duration
+app.use((req, res, next) => {
+  const end = httpRequestDurationHistogram.startTimer();
+  
+  res.on('finish', () => {
+    end({ method: req.method, path: req.path, status_code: res.statusCode });
+  });
+
+  next();
+});
 
 setInterval(() => {
   const rooms = ["office", "lab", "bathroom"]
@@ -61,6 +81,13 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+app.get('/work', async(req, res) => {
+  const times = req.query.times
+  const sleepTime = Math.random() * 1000 * 5;
+  await new Promise(resolve => setTimeout(resolve, sleepTime)); // simulate work
+  res.send(`Work completed in ${Math.round(sleepTime)} ms`);
+})
 
 app.get('/flip-coin', (req: express.Request, res: express.Response)=> {
   const times = Number(req.query.times);
