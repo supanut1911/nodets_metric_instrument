@@ -14,6 +14,13 @@ const headCounter = new client.Counter({
   labelNames: ["method", "path", 'status_code']
 })
 
+//create custom gague
+const temperatureGague = new client.Gauge({
+  name: "temperature_gague",
+  help: "temerature gague",
+  labelNames: ['room']
+})
+
 const tailCounter = new client.Counter({
   name: "tail_counter",
   help: "total number of tail",
@@ -29,6 +36,7 @@ const flipCounter = new client.Counter({
 register.registerMetric(headCounter)
 register.registerMetric(tailCounter)
 register.registerMetric(flipCounter)
+register.registerMetric(temperatureGague)
 register.setDefaultLabels({
   app: 'coin-api'
 })
@@ -36,6 +44,14 @@ register.setDefaultLabels({
 //enable collec default metric
 const collectDefaultMetrics =  client.collectDefaultMetrics
 collectDefaultMetrics({ register })
+
+setInterval(() => {
+  const rooms = ["office", "lab", "bathroom"]
+  rooms.forEach((room) => {
+    const temperature = Math.random() * 10 + 20
+    temperatureGague.set({room},temperature)
+  })
+}, 5000);
 
 
 app.get('/', (req: Request, res: Response) => {
